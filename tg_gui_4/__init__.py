@@ -713,9 +713,12 @@ class widget():
         """
         desc: removes a widget from the screen;
         """
+        #print(self.pickup, visual, debug)
         if debug:
             print('widget.pickup', self, visual)
-        widget._port_pickup(self, visual)
+
+        if visual:
+            widget._port_pickup(self, debug=debug)
 
         self._on_screen = False
         self._pointed = False
