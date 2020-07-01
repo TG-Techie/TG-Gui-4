@@ -206,11 +206,21 @@ class toggleswitch(widget):
         super().__init__(*args, margin=2*unit.margin, **kwargs)
         self._state = state
         self._locked = locked
-        self.on_toggle = on_toggle
+        if on_toggle is not None:
+            self.on_toggle = on_toggle
 
     @onscreen_attribute
     def state(self, value):
         self._state = bool(value)
+
+    def toggle(self, *args, **kwargs):
+        if not self._locked:
+            self.state = not self._state
+            self.on_toggle(self._state)
+
+    def tap(self, *args):
+        #print('tap', self, self._state)
+        self.toggle()
 
     @property
     def locked(self):
@@ -262,12 +272,3 @@ class toggleswitch(widget):
             self.roundrect( switch_x + tab_width, switch_y,
                             empty_width, tab_height, color.darkgray)
         super().place()
-
-    def toggle(self, *args, **kwargs):
-        if not self._locked:
-            self.state = not self._state
-
-    def tap(self, *args):
-        #print('tap', self, self._state)
-        self.toggle()
-        self.on_toggle(self._state)
