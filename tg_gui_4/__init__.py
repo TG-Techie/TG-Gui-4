@@ -111,19 +111,27 @@ action_types = {
 
 class _UniqueConstant():
 
+    def __init__(self, name):
+        self._name = name
+
     def __eq__(self, other):
         return self is other
 
-Horizontal = _UniqueConstant()
-Vertical = _UniqueConstant()
-X = _UniqueConstant()
-Y = _UniqueConstant()
-Z = _UniqueConstant()
+    def __str__(self):
+        return f"<{self._name}>"
 
-Above = _UniqueConstant()
-Below = _UniqueConstant()
-Prior = _UniqueConstant()
-Next = _UniqueConstant()
+Horizontal = _UniqueConstant('Horizontal')
+Vertical = _UniqueConstant('Vertical')
+X = _UniqueConstant('X')
+Y = _UniqueConstant('Y')
+Z = _UniqueConstant('X')
+
+Above = _UniqueConstant('Above')
+Below = _UniqueConstant('Below')
+Prior = _UniqueConstant('Prior')
+Next = _UniqueConstant('Next')
+
+del _UniqueConstant
 
 def bound_function(inst, func):
     """
@@ -842,15 +850,15 @@ class container(widget):
         pass
 
     def rebuild(self):
+        #print(self, self._subordinates)
         with change_appearance(self):
-            subviews = self._subviews
-            while len(subviews):
-                subview = subviews.pop(0)
-                if self._on_screen:
-                    subview.pickup(True)
-                del subview
-
+            for sub in tuple(self._subordinates):
+                self.remove(sub)
+            gc.collect()
+            #print(self._subordinates)
             self.build()
+        #print(self._subordinates)
+
 
     def add(self, sub):
         #print(sub, sub._superior)

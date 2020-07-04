@@ -74,6 +74,62 @@ class matrix(container):
         self.add(wid)
 
 @container.widgetclass
+class group(container):
+
+    def __init__(self, *args,
+            source=None, direction=None,
+            sections=None, **kwargs
+        ):
+
+        super().__init__(*args, _build_now=False, **kwargs)
+
+        if source is None:
+            source = []
+
+        if direction is None:
+            #print((self.height / self.width), (self.height / self.width)  > 0.9)
+            if (self.height / self.width)  > 0.9:
+                direction = Vertical
+            else:
+                direction = Horizontal
+            #print(direction)
+
+        if sections is None:
+            sections = len(source)
+
+        assert isinstance(source, list), f"argument 'source' must be of type 'list', got type '{type(source).__name__}'"
+        assert direction is Horizontal or direction is Vertical, f"argument 'direction' must be of one of 'Horizontal' or 'Vertical'"
+        assert isinstance(sections, int), f"argument 'sections' must be of type 'int', got type '{type(sections).__name__}'"
+
+        self._source = source
+        self._direction = direction
+        self._sections = sections
+
+        self.build()
+
+    @property
+    def direction(self):
+        return self._direction
+
+    def build(self): # build from prototypes
+        count = min(self._sections, len(self._source))
+        if self._direction is Horizontal:
+            width = self.width//self._sections
+            dims = (width, self.height)
+            positions = [(width*offset, 0) for offset in range(self._sections)]
+        else:
+            height = self.height//self._sections
+            dims = (self.width, height)
+            positions = [(0, height*offset) for offset in range(self._sections)]
+
+        source = self._source
+        for index in range(count):
+            self.add(source[index](*positions[index], *dims))
+
+    def __getitem__(self, index):
+        return self._subordinates[index]
+
+@container.widgetclass
 class scrollview(viewport):
 
     sections = 0
@@ -114,8 +170,8 @@ class scrollview(viewport):
         return self._sections
 
     @property
-    def direction(self):
-        return self._direction
+    def navigation(self):
+        return self._navigation
 
     def __getitem__(self, index):
         sections = self._sections
@@ -139,7 +195,6 @@ class scrollview(viewport):
                 wid = mkr(rightof(curview_subs[-1]), 0, *self._item_dims)
             curview.add(wid)
         return curview_subs[-1]
-
 
 @container.widgetclass
 class navigationlink(container._button_type):
