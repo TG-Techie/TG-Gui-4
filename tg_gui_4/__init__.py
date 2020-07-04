@@ -453,42 +453,11 @@ class dimension_specifier():
     def value(self, wid, dimension=None):
         return None
 
-'''class spanbetween(dimension_specifier):
-    def __init__(self, ref0, ref1):
-        self._ref0 = ref0
-        self._ref1 = ref1
+class State():
 
-    def value(self, wid, dimension=None):
-        #defaults to x
-        vertical = dimension == 'y'
-
-        ref0 = self._ref0
-        ref1 = self._ref1
-
-        if isinstance(ref0, widget):
-            if vertical:
-                ref0 = ref0.y + ref0.height
-            else:
-                ref0 = ref0.x + ref0.width
-        if ref0 < 0:
-            if vertical:
-                ref0 = wid._superior.height + 1 + ref0
-            else:
-                ref0 = wid._superior.width + 1 + ref0
-
-        if isinstance(ref1, widget):
-            if vertical:
-                ref1 = ref1.y
-            else:
-                ref1 = ref1.x
-        if ref1 < 0:
-            if vertical:
-                ref1 = wid._superior.height + 1 + ref1 - wid.height
-            else:
-                ref1 = wid._superior.width + 1 + ref1 - wid.width
-
-        return ref1 - ref0'''
-
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
 class widget():
@@ -923,7 +892,7 @@ class viewport(widget):
         """
         def _widcls_subview_wrapper(*widargs, **widkwargs):
             inst = nestcls(*widargs, **widkwargs)
-            setattr()
+            #setattr()
             return nestcls
         return _widcls_subview_wrapper
 
@@ -942,10 +911,14 @@ class viewport(widget):
             print('subview classes for viewport', cls)
             print(subviewclasses, [c._subview_index for c in subviewclasses if hasattr(c, '_subview_index')])
         subviewclasses.sort(key=lambda item: item._subview_index)
+        cls.state = State(
+            subview_index = 0
+        )
+
         if debug:
             print(subviewclasses, [c._subview_index for c in subviewclasses if hasattr(c, '_subview_index')])
 
-    def __init__(self, *args, carousel=False, navigation=None, **actions):
+    def __init__(self, *args, carousel=False, navigation=None, state=None, **actions):
         """
         desc: a widget used to dispay subviews of containers or other viewports.
             nest the possible subview classes inside the subview subclass;
@@ -960,23 +933,20 @@ class viewport(widget):
 
         self.carousel = carousel
 
-        #if enable_navigation is not None:
-        #    self.enable_navigation = enable_navigation
-
         self._navigation = navigation
 
         self._appearance_changer = change_appearance(self)
 
-        self._navigation = navigation
 
-        '''
-        if navigation is Vertical:
-            setattr(self, 'aboveview', self._concede)
-            setattr(self, 'belowview', self._procede)
-        elif navigation is Horizontal:
-            setattr(self, 'priorview', self._concede)
-            setattr(self, 'nextview', self._procede)
-        '''
+        if state is None:
+            # if the class of self does not have a state object
+            #   make one for this isinstance
+            if not hasattr(self, 'state'):
+                self.state = State(
+                    subview_index=0
+                )
+        else:
+            self.state = state
 
         super().__init__(*args, margin=0, **actions)
 
@@ -986,12 +956,10 @@ class viewport(widget):
             ]
 
         if len(subviews):
-            #subviews.sort(key=lambda item: item._subview_index)
-            while subviews[0]._subview_index < 0:
-                subviews.append(subviews.pop(0))
-            self._view_index = 0
+            if not hasattr(self.state, 'subview_index'):
+                self.state.subview_index = 0
         else:
-            self._view_index = None
+            self.state.subview_index = None
 
     def __len__(self):
         return len(self._subviews)
@@ -1012,7 +980,7 @@ class viewport(widget):
 
     @property
     def subview(self):
-        view_index = self._view_index
+        view_index = self.state.subview_index
         if view_index is not None:
             return self._subviews[view_index]
         else:
@@ -1036,7 +1004,7 @@ class viewport(widget):
 
         # if first subview adjust index
         if len(self._subviews) == 1:
-            self._view_index = 0
+            self.state.subview_index = 0
 
         return self._subviews[-1]
 
@@ -1059,9 +1027,9 @@ class viewport(widget):
                         )
         if debug:
             print('index is', index)
-        if self._view_index != index or _force_renav:
+        if self.state.subview_index != index or _force_renav:
             with self._appearance_changer:
-                self._view_index = index
+                self.state.subview_index = index
 
 
     def index(self, target, debug=False):
@@ -1085,7 +1053,7 @@ class viewport(widget):
                 and (type(target) not in self._subviewclasses):
             with self._appearance_changer:
                 self._subviews.remove(target)
-                self._view_index = min(self._view_index, len(self._subviews)-1)
+                self.state.subview_index = min(self.state.subview_index, len(self._subviews)-1)
         else:
             raise ValueError("object not in sequence")
 
@@ -1093,26 +1061,26 @@ class viewport(widget):
     def priorview_active(self):
         return self.navigation is Horizontal\
                and not self.carousel\
-               and not self._view_index == 0\
+               and not self.state.subview_index == 0\
                and len(self._subviews) > 1
 
     @property
     def nextview_active(self):
         return self.navigation is Horizontal\
                and not self.carousel\
-               and not self._view_index == len(self._subviews)-1\
+               and not self.state.subview_index == len(self._subviews)-1\
                and len(self._subviews) > 1
 
     @property
     def aboveview_active(self):
         return self.navigation is Vertical\
-               and not self._view_index == 0\
+               and not self.state.subview_index == 0\
                and len(self._subviews) > 1
 
     @property
     def belowview_active(self):
         return self.navigation is Vertical\
-               and not self._view_index == len(self._subviews)-1\
+               and not self.state.subview_index == len(self._subviews)-1\
                and len(self._subviews) > 1
 
     def place(self):
@@ -1134,26 +1102,26 @@ class viewport(widget):
     def procede(self, *args, debug=False):
         if debug:
             print(f"{self} proceding")
-        index = self._view_index + 1
+        index = self.state.subview_index + 1
 
         if self.carousel:
             index %= len(self._subviews)
         else:
             index = min(index, len(self._subviews)-1)
 
-        if index != self._view_index:
+        if index != self.state.subview_index:
             self.switchview(index)
 
     def concede(self, *args, debug=False):
         if debug:
             print(f"{self} conceding")
-        index = self._view_index - 1
+        index = self.state.subview_index - 1
 
         if self.carousel:
             index %= len(self._subviews, _bypass=True)
         else:
             index = max(index, 0)
-        if index != self._view_index:
+        if index != self.state.subview_index:
             self.switchview(index, _bypass=True)
 
     def _layout(self, indent=0):

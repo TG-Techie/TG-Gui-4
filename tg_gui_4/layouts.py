@@ -306,7 +306,7 @@ class navigationview(viewport):
 
     @property
     def priorview_active(self):
-        return self._view_index != 0
+        return self.state.subview_index != 0
 
     def concede(self, debug=False):
         if debug:
