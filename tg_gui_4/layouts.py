@@ -116,15 +116,15 @@ class group(container):
         if self._direction is Horizontal:
             width = self.width//self._sections
             dims = (width, self.height)
-            positions = [(width*offset, 0) for offset in range(self._sections)]
+            positions = tuple([(width*offset, 0) for offset in range(self._sections)])
         else:
             height = self.height//self._sections
             dims = (self.width, height)
-            positions = [(0, height*offset) for offset in range(self._sections)]
+            positions = tuple([(0, height*offset) for offset in range(self._sections)])
 
         source = self._source
         for index in range(count):
-            self.add(source[index](*positions[index], *dims))
+            self.add(source[index](*positions[index] + dims))
 
     def __getitem__(self, index):
         return self._subordinates[index]

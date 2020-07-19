@@ -695,7 +695,7 @@ class widget():
             print('widget.pickup', self, visual)
 
         if visual:
-            widget._port_pickup(self, debug=debug)
+            widget._port_pickup(self, visual, debug=debug)
 
         self._on_screen = False
         self._pointed = False
@@ -883,6 +883,10 @@ class viewport(widget):
     #per class criteria
     _subviewclasses = ()
     _subview_index = -1
+
+    #cls.state = State(
+    #    subview_index = 0
+    #)
 
 
     @classmethod
